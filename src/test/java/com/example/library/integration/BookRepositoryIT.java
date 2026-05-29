@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -180,17 +182,21 @@ class BookRepositoryIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should enforce unique ISBN constraint")
         void shouldEnforceUniqueIsbn() {
-            // TODO: Try to save two books with the same ISBN
-            //       Verify a DataIntegrityViolationException is thrown
-            //       Hint: Use assertThrows() and flush the persistence context
-            fail("Not implemented yet");
+                createBook("978-duplicate", "First Book", "Author A", 3, Genre.FICTION);
+            Book duplicate = new Book("978-duplicate", "Second Book", "Author B", 2, Genre.SCIENCE);
+
+            assertThrows(DataIntegrityViolationException.class, () -> bookRepository.saveAndFlush(duplicate));
         }
 
         @Test
         @DisplayName("should handle deleting a book")
         void shouldDeleteBook() {
-            // TODO: Save a book, delete it, verify it's gone
-            fail("Not implemented yet");
+            Book saved = createBook("978-delete", "Delete Me", "Author A", 3, Genre.FICTION);
+
+            bookRepository.deleteById(saved.getId());
+            bookRepository.flush();
+
+            assertThat(bookRepository.findById(saved.getId())).isEmpty();
         }
     }
 }
